@@ -9,6 +9,8 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -426,7 +428,7 @@
             background-color: var(--yellow);
             border-radius: 4px;
             width: 100%; 
-            transition: width 0.5s;
+            transition: width 0.5s ease-in-out;
             box-shadow: 0 0 15px rgba(255, 234, 0, 0.4);
         }
 
@@ -462,6 +464,7 @@
             <div class="loader-fill"></div>
         </div>
     </div>
+
     <header class="header">
         <i class="fas fa-bars menu-toggle" id="menuToggle" onclick="toggleSidebar()"></i>
         <h1>IoT <span>Sepeda Statis</span></h1>
@@ -502,7 +505,7 @@
                         <div class="gauge-text" id="rpmValueText">0 <span class="unit">RPM</span></div>
                     </div>
                     <button class="btn-toggle" onclick="toggleChart('chartRpmContainer', this)">
-                        <i class="fas fa-chart-line"></i> Tampilkan Grafik 1 Jam
+                        <i class="fas fa-chart-line"></i> Tampilkan Grafik
                     </button>
                     <div class="chart-container" id="chartRpmContainer">
                         <canvas id="chartRpm"></canvas>
@@ -515,7 +518,7 @@
                         0.00 <span class="unit">V</span>
                     </div>
                     <button class="btn-toggle" onclick="toggleChart('chartBikeVoltsContainer', this)">
-                        <i class="fas fa-chart-area"></i> Tampilkan Grafik 1 Jam
+                        <i class="fas fa-chart-area"></i> Tampilkan Grafik
                     </button>
                     <div class="chart-container" id="chartBikeVoltsContainer">
                         <canvas id="chartBikeVolts"></canvas>
@@ -528,10 +531,23 @@
                         0.00 <span class="unit">A</span>
                     </div>
                     <button class="btn-toggle" onclick="toggleChart('chartBikeCurrentContainer', this)">
-                        <i class="fas fa-chart-bar"></i> Tampilkan Grafik 1 Jam
+                        <i class="fas fa-chart-bar"></i> Tampilkan Grafik
                     </button>
                     <div class="chart-container" id="chartBikeCurrentContainer">
                         <canvas id="chartBikeCurrent"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3> Daya Listrik (Watt)</h3>
+                    <div class="digital-value" id="bikePower" >
+                        0.00 <span class="unit">W</span>
+                    </div>
+                    <button class="btn-toggle" onclick="toggleChart('chartBikePowerContainer', this)">
+                        <i class="fas fa-bolt"></i> Tampilkan Grafik
+                    </button>
+                    <div class="chart-container" id="chartBikePowerContainer">
+                        <canvas id="chartBikePower"></canvas>
                     </div>
                 </div>
 
@@ -541,12 +557,12 @@
         <section id="battery-monitor" class="section">
             <div class="grid-container">
                 
-                <div class="card" style="border-top-color: var(--yellow);">
+                <div class="card">
                     <h3>Status Penyimpanan Baterai</h3>
                     <div class="battery-container">
                         <div class="battery-body">
-                            <div class="battery-level" id="batteryLevelBar" style="width: 100%;"></div>
-                            <div class="battery-text" id="batteryPercentageText">100%</div>
+                            <div class="battery-level" id="batteryLevelBar" style="width: 0%;"></div>
+                            <div class="battery-text" id="batteryPercentageText">0%</div>
                         </div>
                         <div class="battery-info">
                             <i class="fas fa-hourglass-half"></i> Estimasi Waktu Habis:<br>
@@ -561,7 +577,7 @@
                         0.00 <span class="unit">V</span>
                     </div>
                     <button class="btn-toggle" onclick="toggleChart('chartBattVoltsContainer', this)">
-                        <i class="fas fa-chart-area"></i> Tampilkan Grafik 1 Jam
+                        <i class="fas fa-chart-area"></i> Tampilkan Grafik
                     </button>
                     <div class="chart-container" id="chartBattVoltsContainer">
                         <canvas id="chartBattVolts"></canvas>
@@ -574,10 +590,23 @@
                         0.00 <span class="unit">A</span>
                     </div>
                     <button class="btn-toggle" onclick="toggleChart('chartBattCurrentContainer', this)">
-                        <i class="fas fa-chart-bar"></i> Tampilkan Grafik 1 Jam
+                        <i class="fas fa-chart-bar"></i> Tampilkan Grafik
                     </button>
                     <div class="chart-container" id="chartBattCurrentContainer">
                         <canvas id="chartBattCurrent"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3> Daya Baterai (Watt)</h3>
+                    <div class="digital-value" id="battPower" >
+                        0.00 <span class="unit">W</span>
+                    </div>
+                    <button class="btn-toggle" onclick="toggleChart('chartBattPowerContainer', this)">
+                        <i class="fas fa-bolt"></i> Tampilkan Grafik
+                    </button>
+                    <div class="chart-container" id="chartBattPowerContainer">
+                        <canvas id="chartBattPower"></canvas>
                     </div>
                 </div>
 
@@ -595,15 +624,10 @@
         // 0. LOGIKA INTRO / OPENING ANIMATION
         // ==========================================
         window.addEventListener('load', () => {
-            // Memberikan jeda 2.8 detik untuk animasi intro sebelum hilang
             setTimeout(() => {
                 const introScreen = document.getElementById('intro-screen');
                 introScreen.classList.add('hidden');
-                
-                // Menghapus dari DOM setelah animasi fade-out selesai agar tidak membebani klik
-                setTimeout(() => {
-                    introScreen.style.display = 'none';
-                }, 800);
+                setTimeout(() => { introScreen.style.display = 'none'; }, 800);
             }, 2800); 
         });
 
@@ -620,9 +644,7 @@
             appId: "1:131047084898:web:30cf4d3a3edd9e0327923b",
             measurementId: "G-47H1KPE8DJ"
         };
-        // Inisialisasi Aplikasi Firebase
         firebase.initializeApp(firebaseConfig);
-        // Panggil Referensi Database
         const db = firebase.database();
 
         // ==========================================
@@ -647,9 +669,7 @@
             document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active-menu'));
             element.classList.add('active-menu');
 
-            if (window.innerWidth < 992) {
-                sidebar.classList.remove('active');
-            }
+            if (window.innerWidth < 992) { sidebar.classList.remove('active'); }
         }
 
         function toggleChart(containerId, buttonElement) {
@@ -659,12 +679,12 @@
                 buttonElement.innerHTML = `<i class="fas fa-eye-slash"></i> Sembunyikan Grafik`;
             } else {
                 container.style.display = "none";
-                buttonElement.innerHTML = `<i class="fas fa-chart-line"></i> Tampilkan Grafik 1 Jam`;
+                buttonElement.innerHTML = `<i class="fas fa-chart-line"></i> Tampilkan Grafik`;
             }
         }
 
         // ==========================================
-        // 3. KONFIGURASI CHART.JS & GRAFIK
+        // 3. KONFIGURASI CHART.JS & GRAFIK (DENGAN LOCAL STORAGE)
         // ==========================================
         Chart.defaults.color = '#94a3b8';
         Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
@@ -684,16 +704,12 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '85%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false }
-                }
+                responsive: true, maintainAspectRatio: false, cutout: '85%',
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
             }
         });
 
+        // Waktu Aktual
         function getActualTimeLabels() {
             const labels = [];
             const now = new Date();
@@ -715,105 +731,178 @@
                 data: {
                     labels: timeLabels,
                     datasets: [{
-                        label: labelStr,
-                        data: initialData,
-                        borderColor: colorHex,
-                        backgroundColor: colorHex + '22',
-                        borderWidth: 2,
-                        pointBackgroundColor: colorHex,
-                        pointRadius: 2,
-                        fill: true,
-                        tension: 0.4
+                        label: labelStr, data: initialData, borderColor: colorHex, backgroundColor: colorHex + '22',
+                        borderWidth: 2, pointBackgroundColor: colorHex, pointRadius: 2, fill: true, tension: 0.4
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: { 
-                            beginAtZero: false, 
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                        }
+                        y: { beginAtZero: false, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
                     },
                     plugins: { legend: { display: false } }
                 }
             });
         }
 
-        // Variabel Data Grafik (Menyimpan riwayat 13 titik data terakhir)
-        let rpmData = Array(13).fill(0);
-        let bikeVoltsData = Array(13).fill(0);
-        let bikeCurrData = Array(13).fill(0);
-        let battVoltsData = Array(13).fill(0);
-        let battCurrData = Array(13).fill(0);
+        // Cek Local Storage (Agar grafik tidak hilang saat refresh)
+        const savedHistory = JSON.parse(localStorage.getItem('chartHistorySepeda')) || {
+            rpmData: Array(13).fill(0),
+            bikeVoltsData: Array(13).fill(0),
+            bikeCurrData: Array(13).fill(0),
+            bikePowerData: Array(13).fill(0),
+            battVoltsData: Array(13).fill(0),
+            battCurrData: Array(13).fill(0),
+            battPowerData: Array(13).fill(0)
+        };
+
+        // Memuat Data dari Local Storage
+        let rpmData = savedHistory.rpmData;
+        let bikeVoltsData = savedHistory.bikeVoltsData;
+        let bikeCurrData = savedHistory.bikeCurrData;
+        let bikePowerData = savedHistory.bikePowerData;
         
+        let battVoltsData = savedHistory.battVoltsData;
+        let battCurrData = savedHistory.battCurrData;
+        let battPowerData = savedHistory.battPowerData;
+        
+        // Render Grafik dengan data tersimpan
         const chartRpm = createLineChart('chartRpm', 'RPM', '#00e5ff', rpmData);
         const chartBikeVolts = createLineChart('chartBikeVolts', 'Tegangan (V)', '#ffea00', bikeVoltsData);
         const chartBikeCurrent = createLineChart('chartBikeCurrent', 'Arus (A)', '#00e5ff', bikeCurrData);
+        const chartBikePower = createLineChart('chartBikePower', 'Daya (W)', '#ff9800', bikePowerData); 
+
         const chartBattVolts = createLineChart('chartBattVolts', 'Teg. Baterai (V)', '#ffea00', battVoltsData);
         const chartBattCurrent = createLineChart('chartBattCurrent', 'Arus Baterai (A)', '#00e5ff', battCurrData);
+        const chartBattPower = createLineChart('chartBattPower', 'Daya Baterai (W)', '#ff9800', battPowerData); 
 
-        // Fungsi memperbarui Riwayat Grafik
         function updateChartHistory(chartObject, dataArray, newValue) {
-            dataArray.shift(); // Buang data paling lama (kiri)
-            dataArray.push(newValue); // Masukkan data baru (kanan)
+            dataArray.shift(); 
+            dataArray.push(newValue);
             chartObject.update();
         }
 
         // ==========================================
-        // 4. MENDENGARKAN DATA FIREBASE SECARA LIVE
+        // 4. LOGIKA PERHITUNGAN PERSENTASE BATERAI
         // ==========================================
-        // Kita mengambil referensi dari Root ('/') di database Firebase Anda
+        const batteryCurve = [
+            { v: 13.00, p: 100 },
+            { v: 12.75, p: 90 },
+            { v: 12.50, p: 80 },
+            { v: 12.30, p: 70 },
+            { v: 12.15, p: 60 },
+            { v: 12.05, p: 50 },
+            { v: 11.95, p: 40 },
+            { v: 11.81, p: 30 },
+            { v: 11.66, p: 20 },
+            { v: 11.51, p: 10 },
+            { v: 10.50, p: 0 }
+        ];
+
+        function calculateBatteryPercentage(voltage) {
+            if (voltage >= 13.00) return 100;
+            if (voltage <= 10.50) return 0;
+            for (let i = 0; i < batteryCurve.length - 1; i++) {
+                let upper = batteryCurve[i];
+                let lower = batteryCurve[i+1];
+                if (voltage <= upper.v && voltage > lower.v) {
+                    let pct = lower.p + ((voltage - lower.v) * (upper.p - lower.p)) / (upper.v - lower.v);
+                    return Math.round(pct); 
+                }
+            }
+            return 0;
+        }
+
+        // ==========================================
+        // 5. MENDENGARKAN DATA FIREBASE SECARA LIVE
+        // ==========================================
+        let currentAlertState = "normal"; 
+
         db.ref('/').on('value', (snapshot) => {
             const data = snapshot.val();
             
             if (data) {
-                // Ambil nilai dari Firebase (sesuaikan 'nama_variabel' dengan program ESP32 Anda)
-                // Jika ESP32 belum mengirimkan node tersebut, nilai default adalah 0
                 const rpm = data.rpm || 0;
                 const bikeVolt = data.bikeVolt || 0;
                 const bikeCurr = data.bikeCurr || 0;
-                const battPct = data.battPct || 0;
                 const battVolt = data.battVolt || 0;
                 const battCurr = data.battCurr || 0;
                 const timeLeft = data.timeLeft || "-- Jam -- Menit";
 
-                // --- A. UPDATE ANGKA DIGITAL & SPEEDOMETER UI ---
+                const bikePower = bikeVolt * bikeCurr;
+                const battPower = battVolt * battCurr;
+                const calculatedBattPct = calculateBatteryPercentage(battVolt);
+
+                // --- A. UPDATE UI ---
                 document.getElementById('rpmValueText').innerHTML = `${rpm} <br><span class="unit">RPM</span>`;
-                const maxRpm = 200; // Putaran Maksimal Speedometer
-                const remaining = maxRpm - rpm;
+                const remaining = 200 - rpm;
                 rpmGauge.data.datasets[0].data = [rpm, remaining < 0 ? 0 : remaining];
                 rpmGauge.update();
 
                 document.getElementById('bikeVoltage').innerHTML = `${Number(bikeVolt).toFixed(2)} <span class="unit">V</span>`;
                 document.getElementById('bikeCurrent').innerHTML = `${Number(bikeCurr).toFixed(2)} <span class="unit">A</span>`;
+                document.getElementById('bikePower').innerHTML = `${Number(bikePower).toFixed(2)} <span class="unit">W</span>`;
 
                 document.getElementById('battVoltage').innerHTML = `${Number(battVolt).toFixed(2)} <span class="unit">V</span>`;
                 document.getElementById('battCurrent').innerHTML = `${Number(battCurr).toFixed(2)} <span class="unit">A</span>`;
+                document.getElementById('battPower').innerHTML = `${Number(battPower).toFixed(2)} <span class="unit">W</span>`;
                 
-                document.getElementById('batteryPercentageText').innerText = `${battPct}%`;
+                document.getElementById('batteryPercentageText').innerText = `${calculatedBattPct}%`;
                 const batteryLevelBar = document.getElementById('batteryLevelBar');
-                batteryLevelBar.style.width = `${battPct}%`;
+                batteryLevelBar.style.width = `${calculatedBattPct}%`;
                 document.getElementById('batteryTimeLeft').innerText = timeLeft;
 
-                // Indikator Warna Baterai
-                if (battPct <= 20) {
-                    batteryLevelBar.style.backgroundColor = '#ff3333';
+                // --- B. INDIKATOR WARNA & POP-UP NOTIFIKASI ---
+                if (calculatedBattPct === 100) {
+                    batteryLevelBar.style.backgroundColor = '#00e5ff'; 
+                    batteryLevelBar.style.boxShadow = '0 0 15px rgba(0, 229, 255, 0.5)';
+                    
+                    if (currentAlertState !== "full") {
+                        Swal.fire({
+                            title: 'Baterai Penuh 100%',
+                            text: 'Penyimpanan daya telah mencapai kapasitas maksimal. Anda dapat menghentikan kayuhan.',
+                            icon: 'success',
+                            background: '#1e293b', color: '#fff', confirmButtonColor: '#00e5ff'
+                        });
+                        currentAlertState = "full";
+                    }
+                } else if (calculatedBattPct <= 15) {
+                    batteryLevelBar.style.backgroundColor = '#ff3333'; 
                     batteryLevelBar.style.boxShadow = '0 0 15px rgba(255, 51, 51, 0.5)';
+
+                    if (currentAlertState !== "low") {
+                        Swal.fire({
+                            title: 'Baterai Lemah!',
+                            text: 'Kapasitas baterai mencapai batas kritis (15%). Silakan lakukan kayuhan untuk mengisi daya kembali.',
+                            icon: 'warning',
+                            background: '#1e293b', color: '#fff', confirmButtonColor: '#ffea00'
+                        });
+                        currentAlertState = "low";
+                    }
                 } else {
                     batteryLevelBar.style.backgroundColor = 'var(--yellow)';
                     batteryLevelBar.style.boxShadow = '0 0 15px rgba(255, 234, 0, 0.4)';
+                    if(calculatedBattPct > 15 && calculatedBattPct < 100){
+                        currentAlertState = "normal";
+                    }
                 }
 
-                // --- B. UPDATE GRAFIK SECARA LIVE ---
+                // --- C. UPDATE GRAFIK & SIMPAN KE LOCAL STORAGE ---
                 updateChartHistory(chartRpm, rpmData, rpm);
                 updateChartHistory(chartBikeVolts, bikeVoltsData, bikeVolt);
                 updateChartHistory(chartBikeCurrent, bikeCurrData, bikeCurr);
+                updateChartHistory(chartBikePower, bikePowerData, bikePower);
+
                 updateChartHistory(chartBattVolts, battVoltsData, battVolt);
                 updateChartHistory(chartBattCurrent, battCurrData, battCurr);
+                updateChartHistory(chartBattPower, battPowerData, battPower);
+
+                // Simpan history ke memori browser
+                localStorage.setItem('chartHistorySepeda', JSON.stringify({
+                    rpmData, bikeVoltsData, bikeCurrData, bikePowerData,
+                    battVoltsData, battCurrData, battPowerData
+                }));
             }
         }, (error) => {
             console.error("Gagal mengambil data dari Firebase: ", error);
