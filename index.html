@@ -696,12 +696,12 @@
         db.ref('.info/connected').on('value', function(snap) {
             if (snap.val() === true) {
                 statusDot.classList.add('connected');
-                statusText.innerText = "Live";
+                statusText.innerText = "";
                 statusContainer.title = "Terhubung dengan Server Database";
                 statusText.style.color = "#00ff00";
             } else {
                 statusDot.classList.remove('connected');
-                statusText.innerText = "Offline";
+                statusText.innerText = "";
                 statusContainer.title = "Koneksi ke Server Terputus";
                 statusText.style.color = "#ff3333";
             }
