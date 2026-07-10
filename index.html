@@ -94,7 +94,6 @@
             font-weight: bold;
         }
 
-        /* Loader Bar */
         .loader-bar {
             width: 250px;
             height: 4px;
@@ -129,12 +128,18 @@
             height: 70px;
             display: flex;
             align-items: center;
+            justify-content: space-between; /* Memisahkan kiri dan kanan */
             padding: 0 20px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             position: fixed;
             width: 100%;
             z-index: 1000;
             border-bottom: 2px solid var(--electric-blue);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
         }
 
         .menu-toggle {
@@ -159,6 +164,33 @@
 
         .header h1 span {
             color: var(--yellow);
+        }
+
+        /* ================= STATUS KONEKSI (BARU) ================= */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ff3333; /* Merah (Disconnected Default) */
+            box-shadow: 0 0 8px #ff3333;
+            transition: 0.3s ease;
+        }
+
+        .status-dot.connected {
+            background-color: #00ff00; /* Hijau (Connected) */
+            box-shadow: 0 0 10px #00ff00;
         }
 
         /* ================= FOOTER ================= */
@@ -466,8 +498,14 @@
     </div>
 
     <header class="header">
-        <i class="fas fa-bars menu-toggle" id="menuToggle" onclick="toggleSidebar()"></i>
-        <h1>IoT <span>Sepeda Statis</span></h1>
+        <div class="header-left">
+            <i class="fas fa-bars menu-toggle" id="menuToggle" onclick="toggleSidebar()"></i>
+            <h1>IoT <span>Sepeda Statis</span></h1>
+        </div>
+        <div class="connection-status" id="statusContainer" title="Menghubungkan ke Server...">
+            <span id="statusText">Offline</span>
+            <div class="status-dot" id="statusDot"></div>
+        </div>
     </header>
 
     <nav class="sidebar" id="sidebar">
@@ -538,8 +576,8 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3> Daya Listrik (Watt)</h3>
+                <div class="card" >
+                    <h3>Daya Listrik (Watt)</h3>
                     <div class="digital-value" id="bikePower" >
                         0.00 <span class="unit">W</span>
                     </div>
@@ -557,7 +595,7 @@
         <section id="battery-monitor" class="section">
             <div class="grid-container">
                 
-                <div class="card">
+                <div class="card" >
                     <h3>Status Penyimpanan Baterai</h3>
                     <div class="battery-container">
                         <div class="battery-body">
@@ -597,8 +635,8 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3> Daya Baterai (Watt)</h3>
+                <div class="card" >
+                    <h3>Daya Baterai (Watt)</h3>
                     <div class="digital-value" id="battPower" >
                         0.00 <span class="unit">W</span>
                     </div>
@@ -646,6 +684,28 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+
+        // ==========================================
+        // 1.5 LOGIKA INDIKATOR STATUS KONEKSI (BARU)
+        // ==========================================
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const statusContainer = document.getElementById('statusContainer');
+        
+        // Memantau status koneksi bawaan Firebase
+        db.ref('.info/connected').on('value', function(snap) {
+            if (snap.val() === true) {
+                statusDot.classList.add('connected');
+                statusText.innerText = "Live";
+                statusContainer.title = "Terhubung dengan Server Database";
+                statusText.style.color = "#00ff00";
+            } else {
+                statusDot.classList.remove('connected');
+                statusText.innerText = "Offline";
+                statusContainer.title = "Koneksi ke Server Terputus";
+                statusText.style.color = "#ff3333";
+            }
+        });
 
         // ==========================================
         // 2. LOGIKA MENU & RESPONSIVITAS
@@ -904,8 +964,6 @@
                     battVoltsData, battCurrData, battPowerData
                 }));
             }
-        }, (error) => {
-            console.error("Gagal mengambil data dari Firebase: ", error);
         });
 
     </script>
